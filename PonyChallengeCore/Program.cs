@@ -49,8 +49,12 @@ namespace PonyChallengeCore
                     Difficulty = 1
                 };
 
-                var mazeId = await CreateNewMazeGame(maze);
+                var mazeId = "cfe6bef4-bd4c-4ae8-a9ba-8f98532db1e6"; // await CreateNewMazeGame(maze);
                 Console.WriteLine(mazeId);
+
+                // Print the maze in its initial state
+                var mazePrint = await PrintMaze(mazeId);
+                Console.WriteLine(mazePrint);
             }
             catch (Exception ex)
             {
@@ -58,6 +62,11 @@ namespace PonyChallengeCore
             }
         }
 
+        /// <summary>
+        /// Post a request to create a new maze game and gets its id in return
+        /// </summary>
+        /// <param name="maze">A Maze object that specifies all of its properties</param>
+        /// <returns>The Id of the maze as a string</returns>
         static async Task<string> CreateNewMazeGame(Maze maze)
         {
             var serializedMaze = JsonConvert.SerializeObject(maze);
@@ -67,6 +76,19 @@ namespace PonyChallengeCore
             var mazeId = JsonConvert.DeserializeObject(await response.Content.ReadAsStringAsync(), typeof(MazeId));
 
             return ((MazeId)mazeId).Id;
+        }
+
+        /// <summary>
+        /// Send a request to get the maze and its state as a string that can be directly printed in the console
+        /// </summary>
+        /// <param name="mazeId">The maze Id</param>
+        /// <returns>A string representing the maze and its state</returns>
+        static async Task<string> PrintMaze(string mazeId)
+        {
+            var response = await client.GetAsync($"pony-challenge/maze/{mazeId}/print");
+            response.EnsureSuccessStatusCode();
+
+            return await response.Content.ReadAsStringAsync();
         }
     }
 }
