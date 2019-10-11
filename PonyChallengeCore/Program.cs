@@ -59,39 +59,50 @@ namespace PonyChallengeCore
                     Difficulty = 1
                 };
 
-                var mazeId = "154adb05-b8ac-45d4-81fb-29ec5b96a7f7";
-                //var mazeId = await CreateNewMazeGame(maze);
+                //var mazeId = "154adb05-b8ac-45d4-81fb-29ec5b96a7f7";
+                var mazeId = await CreateNewMazeGame(maze);
                 Console.WriteLine(mazeId);
 
                 // Print the maze in its initial state
                 await PrintMaze(mazeId);
 
                 bool active = true;
-                var validInputs = new List<string>() { "N", "W", "S", "E" };
+                var validKeys = new List<ConsoleKey>()
+                {
+                    ConsoleKey.UpArrow,
+                    ConsoleKey.LeftArrow,
+                    ConsoleKey.DownArrow,
+                    ConsoleKey.RightArrow,
+                    ConsoleKey.N,
+                    ConsoleKey.W,
+                    ConsoleKey.S,
+                    ConsoleKey.E
+                };
+
                 while (active)
                 {
                     Console.WriteLine($"What is your next move (N, W, S, E)?");
-                    var input = Console.ReadLine();
+                    var inputKey = Console.ReadKey().Key;
 
-                    if (!validInputs.Contains(input.ToUpper()))
+                    if (!validKeys.Contains(inputKey))
                     {
                         Console.WriteLine("The input is invalid.");
                         continue;
                     }
 
                     var move = string.Empty;
-                    switch (input.ToUpper())
+                    switch (inputKey)
                     {
-                        case "N":
+                        case ConsoleKey.UpArrow: case ConsoleKey.N:
                             move = "north";
                             break;
-                        case "W":
+                        case ConsoleKey.LeftArrow: case ConsoleKey.W:
                             move = "west";
                             break;
-                        case "S":
+                        case ConsoleKey.DownArrow: case ConsoleKey.S:
                             move = "south";
                             break;
-                        case "E":
+                        case ConsoleKey.RightArrow: case ConsoleKey.E:
                             move = "east";
                             break;
                         default:
