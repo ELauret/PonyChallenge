@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 
@@ -24,6 +26,14 @@ namespace PonyChallengeCore
         public string Id { get; set; }
     }
 
+    public class Statuses
+    {
+        [JsonProperty(PropertyName = "state")]
+        public string MazeState { get; set; }
+        [JsonProperty(PropertyName = "state-result")]
+        public string MoveStatus { get; set; }
+    }
+
     class Program
     {
         static HttpClient client = new HttpClient();
@@ -32,7 +42,7 @@ namespace PonyChallengeCore
         {
             RunAsync().Wait();
         }
-         
+
         static async Task RunAsync()
         {
             client.BaseAddress = new Uri($"https://ponychallenge.trustpilot.com/");
@@ -49,12 +59,55 @@ namespace PonyChallengeCore
                     Difficulty = 1
                 };
 
-                var mazeId = "cfe6bef4-bd4c-4ae8-a9ba-8f98532db1e6"; // await CreateNewMazeGame(maze);
+                var mazeId = "154adb05-b8ac-45d4-81fb-29ec5b96a7f7";
+                //var mazeId = await CreateNewMazeGame(maze);
                 Console.WriteLine(mazeId);
 
                 // Print the maze in its initial state
-                var mazePrint = await PrintMaze(mazeId);
-                Console.WriteLine(mazePrint);
+                await PrintMaze(mazeId);
+
+                bool active = true;
+                var validInputs = new List<string>() { "N", "W", "S", "E" };
+                while (active)
+                {
+                    Console.WriteLine($"What is your next move (N, W, S, E)?");
+                    var input = Console.ReadLine();
+
+                    if (!validInputs.Contains(input.ToUpper()))
+                    {
+                        Console.WriteLine("The input is invalid.");
+                        continue;
+                    }
+
+                    var move = string.Empty;
+                    switch (input.ToUpper())
+                    {
+                        case "N":
+                            move = "north";
+                            break;
+                        case "W":
+                            move = "west";
+                            break;
+                        case "S":
+                            move = "south";
+                            break;
+                        case "E":
+                            move = "east";
+                            break;
+                        default:
+                            break;
+                    }
+
+                    var statuses = await MakeNextMove(mazeId, move);
+                    await PrintMaze(mazeId);
+                    Console.WriteLine(statuses.MoveStatus);
+
+                    if (!statuses.MazeState.Equals("active"))
+                    {
+                        active = false;
+                        Console.WriteLine(statuses.MazeState);
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -70,25 +123,48 @@ namespace PonyChallengeCore
         static async Task<string> CreateNewMazeGame(Maze maze)
         {
             var serializedMaze = JsonConvert.SerializeObject(maze);
-            var content = new StringContent(serializedMaze, System.Text.Encoding.UTF8, "application/json");
+            var content = new StringContent(serializedMaze, Encoding.UTF8, "application/json");
             var response = await client.PostAsync($"pony-challenge/maze", content);
-            response.EnsureSuccessStatusCode();
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new HttpRequestException(response.Content.ReadAsStringAsync().Result);
+            }
             var mazeId = JsonConvert.DeserializeObject(await response.Content.ReadAsStringAsync(), typeof(MazeId));
 
             return ((MazeId)mazeId).Id;
         }
 
         /// <summary>
-        /// Send a request to get the maze and its state as a string that can be directly printed in the console
+        /// Send a request to get the maze and print in the console
         /// </summary>
         /// <param name="mazeId">The maze Id</param>
-        /// <returns>A string representing the maze and its state</returns>
-        static async Task<string> PrintMaze(string mazeId)
+        /// <returns></returns>
+        static async Task PrintMaze(string mazeId)
         {
             var response = await client.GetAsync($"pony-challenge/maze/{mazeId}/print");
             response.EnsureSuccessStatusCode();
 
-            return await response.Content.ReadAsStringAsync();
+            Console.Clear();
+            Console.WriteLine(await response.Content.ReadAsStringAsync());
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="input"></param>
+        /// <returns></returns>
+        static async Task<Statuses> MakeNextMove(string mazeId, string move)
+        {
+            var serializedMove = JsonConvert.SerializeObject(new { direction = move });
+            var content = new StringContent(serializedMove, Encoding.UTF8, "application/json");
+            var response = await client.PostAsync($"pony-challenge/maze/{mazeId}", content);
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new HttpRequestException(response.Content.ReadAsStringAsync().Result);
+            }
+            var statuses = JsonConvert.DeserializeObject(response.Content.ReadAsStringAsync().Result, typeof(Statuses));
+
+            return (Statuses)statuses;
         }
     }
 }
