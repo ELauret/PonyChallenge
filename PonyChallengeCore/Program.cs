@@ -5,35 +5,12 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using System.Diagnostics;
+using System.IO;
+using PonyChallengeCore.Model;
 
 namespace PonyChallengeCore
 {
-    public class Maze
-    {
-        [JsonProperty(PropertyName = "maze-width")]
-        public int Width { get; set; }
-        [JsonProperty(PropertyName = "maze-height")]
-        public int Height { get; set; }
-        [JsonProperty(PropertyName = "maze-player-name")]
-        public string PlayerName { get; set; }
-        [JsonProperty(PropertyName = "difficulty")]
-        public int Difficulty { get; set; }
-    }
-
-    public class MazeId
-    {
-        [JsonProperty(PropertyName = "maze_id")]
-        public string Id { get; set; }
-    }
-
-    public class Statuses
-    {
-        [JsonProperty(PropertyName = "state")]
-        public string MazeState { get; set; }
-        [JsonProperty(PropertyName = "state-result")]
-        public string MoveStatus { get; set; }
-    }
-
     class Program
     {
         static HttpClient client = new HttpClient();
@@ -51,7 +28,7 @@ namespace PonyChallengeCore
 
             try
             {
-                var maze = new Maze
+                var maze = new MazeInitializer
                 {
                     Width = 15,
                     Height = 15,
@@ -59,8 +36,19 @@ namespace PonyChallengeCore
                     Difficulty = 1
                 };
 
+                var mazeId = string.Empty;
+                const string fileName = "CurrentMaze.txt";
+                if (File.Exists(fileName))
+                {
+                    mazeId = File.ReadAllText(fileName);
+                }
+                else
+                {
+                    mazeId = await CreateNewMazeGame(maze);
+                    File.WriteAllText(fileName, mazeId);
+                }
+
                 //var mazeId = "154adb05-b8ac-45d4-81fb-29ec5b96a7f7";
-                var mazeId = await CreateNewMazeGame(maze);
                 Console.WriteLine(mazeId);
 
                 // Print the maze in its initial state
@@ -93,16 +81,16 @@ namespace PonyChallengeCore
                     var move = string.Empty;
                     switch (inputKey)
                     {
-                        case ConsoleKey.UpArrow: case ConsoleKey.N:
+                        case ConsoleKey k when (k == ConsoleKey.UpArrow || k == ConsoleKey.N):
                             move = "north";
                             break;
-                        case ConsoleKey.LeftArrow: case ConsoleKey.W:
+                        case ConsoleKey k when (k == ConsoleKey.LeftArrow || k == ConsoleKey.W):
                             move = "west";
                             break;
-                        case ConsoleKey.DownArrow: case ConsoleKey.S:
+                        case ConsoleKey k when (k == ConsoleKey.DownArrow || k == ConsoleKey.S):
                             move = "south";
                             break;
-                        case ConsoleKey.RightArrow: case ConsoleKey.E:
+                        case ConsoleKey k when (k == ConsoleKey.RightArrow || k == ConsoleKey.E):
                             move = "east";
                             break;
                         default:
@@ -118,6 +106,8 @@ namespace PonyChallengeCore
                         active = false;
                         Console.WriteLine(statuses.MazeState);
                     }
+
+                    var mazeState = GetMazeCurrentState(mazeId);
                 }
             }
             catch (Exception ex)
@@ -131,11 +121,12 @@ namespace PonyChallengeCore
         /// </summary>
         /// <param name="maze">A Maze object that specifies all of its properties</param>
         /// <returns>The Id of the maze as a string</returns>
-        static async Task<string> CreateNewMazeGame(Maze maze)
+        static async Task<string> CreateNewMazeGame(MazeInitializer maze)
         {
             var serializedMaze = JsonConvert.SerializeObject(maze);
             var content = new StringContent(serializedMaze, Encoding.UTF8, "application/json");
             var response = await client.PostAsync($"pony-challenge/maze", content);
+            content.Dispose();
             if (!response.IsSuccessStatusCode)
             {
                 throw new HttpRequestException(response.Content.ReadAsStringAsync().Result);
@@ -153,7 +144,10 @@ namespace PonyChallengeCore
         static async Task PrintMaze(string mazeId)
         {
             var response = await client.GetAsync($"pony-challenge/maze/{mazeId}/print");
-            response.EnsureSuccessStatusCode();
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new HttpRequestException(response.Content.ReadAsStringAsync().Result);
+            }
 
             Console.Clear();
             Console.WriteLine(await response.Content.ReadAsStringAsync());
@@ -169,6 +163,7 @@ namespace PonyChallengeCore
             var serializedMove = JsonConvert.SerializeObject(new { direction = move });
             var content = new StringContent(serializedMove, Encoding.UTF8, "application/json");
             var response = await client.PostAsync($"pony-challenge/maze/{mazeId}", content);
+            content.Dispose();
             if (!response.IsSuccessStatusCode)
             {
                 throw new HttpRequestException(response.Content.ReadAsStringAsync().Result);
@@ -176,6 +171,23 @@ namespace PonyChallengeCore
             var statuses = JsonConvert.DeserializeObject(response.Content.ReadAsStringAsync().Result, typeof(Statuses));
 
             return (Statuses)statuses;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="mazeId"></param>
+        /// <returns></returns>
+        static async Task<MazeState> GetMazeCurrentState(string mazeId)
+        {            
+            var response = await client.GetAsync($"pony-challenge/maze/{mazeId}");
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new HttpRequestException(response.Content.ReadAsStringAsync().Result);
+            }
+            var mazeState = JsonConvert.DeserializeObject(response.Content.ReadAsStringAsync().Result, typeof(MazeState));
+
+            return (MazeState)mazeState;
         }
     }
 }
