@@ -14,6 +14,17 @@ namespace PonyChallengeCore
     class Program
     {
         static HttpClient client = new HttpClient();
+        static List<ConsoleKey> ValidKeys = new List<ConsoleKey>()
+                {
+                    ConsoleKey.UpArrow,
+                    ConsoleKey.LeftArrow,
+                    ConsoleKey.DownArrow,
+                    ConsoleKey.RightArrow,
+                    ConsoleKey.N,
+                    ConsoleKey.W,
+                    ConsoleKey.S,
+                    ConsoleKey.E
+                };
 
         static void Main(string[] args)
         {
@@ -28,54 +39,24 @@ namespace PonyChallengeCore
 
             try
             {
+                // Initialize and print out maze
                 string mazeId = await InitializeMaze();
                 Console.WriteLine(mazeId);
                 await PrintMaze(mazeId);
 
                 bool active = true;
-                var validKeys = new List<ConsoleKey>()
-                {
-                    ConsoleKey.UpArrow,
-                    ConsoleKey.LeftArrow,
-                    ConsoleKey.DownArrow,
-                    ConsoleKey.RightArrow,
-                    ConsoleKey.N,
-                    ConsoleKey.W,
-                    ConsoleKey.S,
-                    ConsoleKey.E
-                };
-
                 while (active)
                 {
                     Console.WriteLine($"What is your next move (N, W, S, E)?");
                     var inputKey = Console.ReadKey().Key;
 
-                    if (!validKeys.Contains(inputKey))
+                    if (!ValidKeys.Contains(inputKey))
                     {
                         Console.WriteLine("The input is invalid.");
                         continue;
                     }
 
-                    var move = string.Empty;
-                    switch (inputKey)
-                    {
-                        case ConsoleKey k when (k == ConsoleKey.UpArrow || k == ConsoleKey.N):
-                            move = "north";
-                            break;
-                        case ConsoleKey k when (k == ConsoleKey.LeftArrow || k == ConsoleKey.W):
-                            move = "west";
-                            break;
-                        case ConsoleKey k when (k == ConsoleKey.DownArrow || k == ConsoleKey.S):
-                            move = "south";
-                            break;
-                        case ConsoleKey k when (k == ConsoleKey.RightArrow || k == ConsoleKey.E):
-                            move = "east";
-                            break;
-                        default:
-                            break;
-                    }
-
-                    var statuses = await MakeNextMove(mazeId, move);
+                    var statuses = await MakeNextMove(mazeId, DetermineMove(inputKey));
                     await PrintMaze(mazeId);
                     Console.WriteLine(statuses.MoveStatus);
 
@@ -92,6 +73,35 @@ namespace PonyChallengeCore
             {
                 Console.WriteLine(ex.Message);
             }
+        }
+
+        /// <summary>
+        /// Determine the move based on user input
+        /// </summary>
+        /// <param name="inputKey"></param>
+        /// <returns> Move as a string </returns>
+        private static string DetermineMove(ConsoleKey inputKey)
+        {
+            var move = string.Empty;
+            switch (inputKey)
+            {
+                case ConsoleKey k when (k == ConsoleKey.UpArrow || k == ConsoleKey.N):
+                    move = "north";
+                    break;
+                case ConsoleKey k when (k == ConsoleKey.LeftArrow || k == ConsoleKey.W):
+                    move = "west";
+                    break;
+                case ConsoleKey k when (k == ConsoleKey.DownArrow || k == ConsoleKey.S):
+                    move = "south";
+                    break;
+                case ConsoleKey k when (k == ConsoleKey.RightArrow || k == ConsoleKey.E):
+                    move = "east";
+                    break;
+                default:
+                    break;
+            }
+
+            return move;
         }
 
         /// <summary>
