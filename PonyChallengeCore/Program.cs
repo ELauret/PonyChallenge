@@ -28,30 +28,8 @@ namespace PonyChallengeCore
 
             try
             {
-                var maze = new MazeInitializer
-                {
-                    Width = 15,
-                    Height = 15,
-                    PlayerName = "Applejack",
-                    Difficulty = 1
-                };
-
-                var mazeId = string.Empty;
-                const string fileName = "CurrentMaze.txt";
-                if (File.Exists(fileName))
-                {
-                    mazeId = File.ReadAllText(fileName);
-                }
-                else
-                {
-                    mazeId = await CreateNewMazeGame(maze);
-                    File.WriteAllText(fileName, mazeId);
-                }
-
-                //var mazeId = "154adb05-b8ac-45d4-81fb-29ec5b96a7f7";
+                string mazeId = await InitializeMaze();
                 Console.WriteLine(mazeId);
-
-                // Print the maze in its initial state
                 await PrintMaze(mazeId);
 
                 bool active = true;
@@ -114,6 +92,51 @@ namespace PonyChallengeCore
             {
                 Console.WriteLine(ex.Message);
             }
+        }
+
+        /// <summary>
+        /// Looks for existing active maze game. Initialize a new one if none.
+        /// </summary>
+        /// <returns> Maze Id</returns>
+        private static async Task<string> InitializeMaze()
+        {            
+            const string fileName = "CurrentMaze.txt";
+            string mazeId;
+
+            if (File.Exists(fileName))
+            {
+                mazeId = File.ReadAllText(fileName);
+                var mazeState = await GetMazeCurrentState(mazeId);
+                if (mazeState.GameState.MazeState.Equals("active"))
+                {
+                    return mazeId;
+                }
+            }
+
+            mazeId = await InitializeMaze(15, 15, "Applejack", 1);
+            File.WriteAllText(fileName, mazeId);
+
+            return mazeId;
+        }
+
+        /// <summary>
+        /// Create a new maze game.
+        /// </summary>
+        /// <param name="width"></param>
+        /// <param name="heigth"></param>
+        /// <param name="playerName"></param>
+        /// <param name="difficulty"></param>
+        /// <returns> Maze Id </returns>
+        private static async Task<string> InitializeMaze(int width, int heigth, string playerName, int difficulty)
+        {
+            var maze = new MazeInitializer
+            {
+                Width = width,
+                Height = heigth,
+                PlayerName = playerName,
+                Difficulty = difficulty
+            };
+            return await CreateNewMazeGame(maze);
         }
 
         /// <summary>
