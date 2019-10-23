@@ -5,7 +5,7 @@ using Newtonsoft.Json;
 
 namespace PonyChallengeCore.Model
 {
-    public class MazeInitializer
+    public class MazeCreationInfo
     {
         [JsonProperty(PropertyName = "maze-width")]
         public int Width { get; set; }

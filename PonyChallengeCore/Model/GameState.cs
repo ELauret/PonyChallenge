@@ -5,7 +5,7 @@ using Newtonsoft.Json;
 
 namespace PonyChallengeCore.Model
 {
-    public class Statuses
+    public class GameState
     {
         [JsonProperty(PropertyName = "state")]
         public string MazeState { get; set; }
