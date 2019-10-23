@@ -1,4 +1,4 @@
-﻿#define INTERACTIVE
+﻿//#define INTERACTIVE
 
 using System;
 using System.Collections.Generic;
@@ -10,6 +10,8 @@ using Newtonsoft.Json;
 using System.Diagnostics;
 using System.IO;
 using PonyChallengeCore.Model;
+using System.Linq;
+using System.Threading;
 
 namespace PonyChallengeCore
 {
@@ -71,13 +73,121 @@ namespace PonyChallengeCore
                 }
 
 #else
-                // TODO: Implement logic to solve the maze automatically
+                var mazeState = await GetMazeCurrentState(mazeId);
+                var maze = InitializeMazeSolver(mazeState);
+                var width = mazeState.Dimensions[0];
+
+                while (mazeState.GameState.MazeState.ToLower() == "active")
+                {
+                    var ponyPosition = mazeState.PonyPosition[0];
+                    var currentCell = maze[ponyPosition];
+                    var openSidesCount = currentCell.Sides.Count(s => s.Value == CellSideState.Open);
+
+                    CellSide sideToCross;
+                    if (openSidesCount > 1)
+                    {
+                        sideToCross = currentCell.Sides.First(
+                                            s => s.Value == CellSideState.Open
+                                            && s.Key != currentCell.FirstEnteredSide).Key;
+                    }
+                    else if (openSidesCount == 1)
+                    {
+                        sideToCross = currentCell.Sides.Single(s => s.Value == CellSideState.Open).Key;
+                    }
+                    else
+                    {
+                        if (currentCell.FirstEnteredSide != null)
+                        {
+                            sideToCross = (CellSide)currentCell.FirstEnteredSide;
+                        }
+                        else
+                        {
+                            throw new Exception("Houston... We have a problem.");
+                        }
+                    }
+                    currentCell.Sides[sideToCross] = CellSideState.Closed;
+
+                    var statuses = await MakeNextMove(mazeId, DetermineMove(sideToCross));
+
+                    if (statuses.MoveStatus.ToLower().Equals("move accepted"))
+                    {
+                        switch (sideToCross)
+                        {
+                            case CellSide.North:
+                                if (maze[ponyPosition - width].FirstEnteredSide == null) maze[ponyPosition - width].FirstEnteredSide = CellSide.South;
+                                break;
+                            case CellSide.West:
+                                if (maze[ponyPosition - 1].FirstEnteredSide == null) maze[ponyPosition - 1].FirstEnteredSide = CellSide.East;
+                                break;
+                            case CellSide.South:
+                                if (maze[ponyPosition + width].FirstEnteredSide == null) maze[ponyPosition + width].FirstEnteredSide = CellSide.North;
+                                break;
+                            case CellSide.East:
+                                if (maze[ponyPosition + 1].FirstEnteredSide == null) maze[ponyPosition + 1].FirstEnteredSide = CellSide.West;
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+
+                    await PrintMaze(mazeId);
+                    Console.WriteLine(statuses.MoveStatus);
+
+                    mazeState = await GetMazeCurrentState(mazeId);
+
+                    if (mazeState.GameState.MazeState != "active")
+                    {
+                        Console.WriteLine(statuses.MazeState);
+                    }
+
+                    Thread.Sleep(500);
+                }
 #endif
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                Console.WriteLine($"{ex.Message} Line : {ex.StackTrace}");
             }
+        }
+
+        /// <summary>
+        /// Instanciate and initialize an array of cells that represent the maze
+        /// </summary>
+        /// <param name="mazeState"></param>
+        /// <returns></returns>
+        private static Cell[] InitializeMazeSolver(MazeState mazeState)
+        {
+            var width = mazeState.Dimensions[0];
+            var height = mazeState.Dimensions[1];
+            var maze = new Cell[width * height];
+
+            for (int i = 0; i < width * height; i++)
+            {
+                maze[i] = new Cell();
+
+                if (mazeState.Data[i].Any(w => w == "north")) maze[i].Sides[CellSide.North] = CellSideState.Sealed;
+                if (mazeState.Data[i].Any(w => w == "west")) maze[i].Sides[CellSide.West] = CellSideState.Sealed;
+
+                if (i < width * height - 1)
+                {
+                    if (mazeState.Data[i + 1].Any(w => w == "west")) maze[i].Sides[CellSide.East] = CellSideState.Sealed;
+                }
+                else
+                {
+                    maze[i].Sides[CellSide.East] = CellSideState.Sealed;
+                }
+
+                if (i < width * (height - 1))
+                {
+                    if (mazeState.Data[i + width].Any(w => w == "north")) maze[i].Sides[CellSide.South] = CellSideState.Sealed;
+                }
+                else
+                {
+                    maze[i].Sides[CellSide.South] = CellSideState.Sealed;
+                }
+            }
+
+            return maze;
         }
 
         /// <summary>
@@ -110,11 +220,40 @@ namespace PonyChallengeCore
         }
 
         /// <summary>
+        /// Determine the move based on user input
+        /// </summary>
+        /// <param name="inputKey"></param>
+        /// <returns> Move as a string </returns>
+        public static string DetermineMove(CellSide sideToCross)
+        {
+            var move = string.Empty;
+            switch (sideToCross)
+            {
+                case CellSide.North:
+                    move = "north";
+                    break;
+                case CellSide.West:
+                    move = "west";
+                    break;
+                case CellSide.South:
+                    move = "south";
+                    break;
+                case CellSide.East:
+                    move = "east";
+                    break;
+                default:
+                    throw new ArgumentException("Side of the cell to cross is invalid.");
+            }
+
+            return move;
+        }
+
+        /// <summary>
         /// Looks for existing active maze game. Initialize a new one if none.
         /// </summary>
         /// <returns> Maze Id</returns>
         private static async Task<string> InitializeMaze()
-        {            
+        {
             const string fileName = "CurrentMaze.txt";
             string mazeId;
 
@@ -122,7 +261,7 @@ namespace PonyChallengeCore
             {
                 mazeId = File.ReadAllText(fileName);
                 var mazeState = await GetMazeCurrentState(mazeId);
-                if (mazeState.GameState.MazeState.Equals("active"))
+                if (mazeState.GameState.MazeState.ToLower().Equals("active"))
                 {
                     return mazeId;
                 }
@@ -219,7 +358,7 @@ namespace PonyChallengeCore
         /// <param name="mazeId"></param>
         /// <returns></returns>
         static async Task<MazeState> GetMazeCurrentState(string mazeId)
-        {            
+        {
             var response = await client.GetAsync($"pony-challenge/maze/{mazeId}");
             if (!response.IsSuccessStatusCode)
             {
