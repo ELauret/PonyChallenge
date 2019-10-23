@@ -3,7 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29306.81
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PonyChallengeCore", "PonyChallengeCore\PonyChallengeCore.csproj", "{910958D5-E567-4E11-874B-E5C68F071818}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PonyChallengeCore", "PonyChallengeCore\PonyChallengeCore.csproj", "{910958D5-E567-4E11-874B-E5C68F071818}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{3EB3434F-BD42-4838-B447-A7C2261593CF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PonyChallengeCore.Tests", "PonyChallengeCore.Tests\PonyChallengeCore.Tests.csproj", "{1935C048-EB6A-4C26-B96D-32558391D7F8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,9 +19,16 @@ Global
 		{910958D5-E567-4E11-874B-E5C68F071818}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{910958D5-E567-4E11-874B-E5C68F071818}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{910958D5-E567-4E11-874B-E5C68F071818}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1935C048-EB6A-4C26-B96D-32558391D7F8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1935C048-EB6A-4C26-B96D-32558391D7F8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1935C048-EB6A-4C26-B96D-32558391D7F8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1935C048-EB6A-4C26-B96D-32558391D7F8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{1935C048-EB6A-4C26-B96D-32558391D7F8} = {3EB3434F-BD42-4838-B447-A7C2261593CF}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E10D145E-DF31-4F96-9856-DA2FB9FBA855}

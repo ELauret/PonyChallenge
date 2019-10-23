@@ -1,4 +1,6 @@
-﻿using System;
+﻿#define INTERACTIVE
+
+using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -11,7 +13,7 @@ using PonyChallengeCore.Model;
 
 namespace PonyChallengeCore
 {
-    class Program
+    public class Program
     {
         static HttpClient client = new HttpClient();
         static List<ConsoleKey> ValidKeys = new List<ConsoleKey>()
@@ -39,10 +41,11 @@ namespace PonyChallengeCore
 
             try
             {
-                // Initialize and print out maze
                 string mazeId = await InitializeMaze();
                 Console.WriteLine(mazeId);
                 await PrintMaze(mazeId);
+
+#if INTERACTIVE
 
                 bool active = true;
                 while (active)
@@ -65,9 +68,11 @@ namespace PonyChallengeCore
                         active = false;
                         Console.WriteLine(statuses.MazeState);
                     }
-
-                    var mazeState = GetMazeCurrentState(mazeId);
                 }
+
+#else
+                // TODO: Implement logic to solve the maze automatically
+#endif
             }
             catch (Exception ex)
             {
@@ -80,7 +85,7 @@ namespace PonyChallengeCore
         /// </summary>
         /// <param name="inputKey"></param>
         /// <returns> Move as a string </returns>
-        private static string DetermineMove(ConsoleKey inputKey)
+        public static string DetermineMove(ConsoleKey inputKey)
         {
             var move = string.Empty;
             switch (inputKey)
@@ -98,7 +103,7 @@ namespace PonyChallengeCore
                     move = "east";
                     break;
                 default:
-                    break;
+                    throw new IOException("Pressed key is not in the list of valid input.");
             }
 
             return move;
@@ -148,6 +153,8 @@ namespace PonyChallengeCore
             };
             return await CreateNewMazeGame(maze);
         }
+
+        #region API Call Methods
 
         /// <summary>
         /// Post a request to create a new maze game and gets its id in return
@@ -222,5 +229,7 @@ namespace PonyChallengeCore
 
             return (MazeState)mazeState;
         }
+
+        #endregion
     }
 }
