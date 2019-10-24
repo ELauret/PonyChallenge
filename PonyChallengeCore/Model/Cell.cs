@@ -8,6 +8,7 @@ namespace PonyChallengeCore.Model
     {
         public Dictionary<CellSide,CellSideState> Sides { get; }
         public CellSide? FirstEnteredSide;
+        public int DistanceToExit { get; set; }
 
         public Cell()
         {

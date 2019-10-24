@@ -14,11 +14,17 @@ namespace PonyChallengeCore.Model
         public MazeSolver(MazeState mazeState)
         {
             if (mazeState == null) throw new ArgumentNullException("mazeState");
-            if (mazeState.Width * mazeState.Height == 0) throw new ArgumentException("Width and height of the maze cannot be zero!");
 
+            if (mazeState.Width * mazeState.Height == 0) throw new ArgumentException("Width and height of the maze cannot be zero!");
             Width = mazeState.Width;
             Height = mazeState.Height;
 
+            InitalizeMazeCells(mazeState);
+            SetCellDistanceToExit(mazeState.ExitPosition[0], null);
+        }
+
+        private void InitalizeMazeCells(MazeState mazeState)
+        {
             Cells = new Cell[Width * Height];
 
             for (int i = 0; i < Width * Height; i++)
@@ -48,13 +54,57 @@ namespace PonyChallengeCore.Model
             }
         }
 
+        public void SetCellDistanceToExit(int cellId, int? parentCellId)
+        {
+            if (parentCellId == null) Cells[cellId].DistanceToExit = 0;
+            else Cells[cellId].DistanceToExit = Cells[(int)parentCellId].DistanceToExit + 1;
+
+            var validNeighboursIds = FindValidNeighbourCells(cellId, parentCellId);
+            foreach (var neighbourId in validNeighboursIds)
+            {
+                SetCellDistanceToExit(neighbourId, cellId);
+            }
+        }
+
+        public List<int> FindValidNeighbourCells(int cellId, int? parentCellId)
+        {
+            var neighbourCellIds = new List<int>();
+
+            var validOpenSides = Cells[cellId].Sides.Where(s => s.Value == CellSideState.Open).Select(s => s.Key);
+            foreach (var side in validOpenSides)
+            {
+                var neighbourCellId = IdentifyNeighbourCell(cellId, side);
+                if (neighbourCellId != parentCellId) neighbourCellIds.Add(neighbourCellId);
+            }
+
+            return neighbourCellIds;
+        }
+
+        public int IdentifyNeighbourCell(int cellId, CellSide side)
+        {
+            switch (side)
+            {
+                case CellSide.North:
+                    return cellId - Width;
+                case CellSide.West:
+                    return cellId - 1;
+                case CellSide.South:
+                    return cellId + Width;
+                case CellSide.East:
+                    return cellId + 1;
+                default:
+                    throw new ArgumentException("The side identifier passed is not valid.");
+            }
+        }
+
         /// <summary>
         /// Find for the current cell which side of it to go through to the next cell
         /// </summary>
         /// <param name="currentCell"></param>
         /// <returns> Returns the side of the cell to go through </returns>
-        public CellSide FindSideToCross(Cell currentCell)
+        public CellSide FindSideToCross(int currentCellId)
         {
+            var currentCell = Cells[currentCellId];
             var openSidesCount = currentCell.Sides.Count(s => s.Value == CellSideState.Open);
 
             CellSide sideToCross;
@@ -63,6 +113,21 @@ namespace PonyChallengeCore.Model
                 sideToCross = currentCell.Sides.First(
                                     s => s.Value == CellSideState.Open
                                     && s.Key != currentCell.FirstEnteredSide).Key;
+
+                var validSides = currentCell.Sides.Where(
+                                    s => s.Value == CellSideState.Open
+                                    && s.Key != currentCell.FirstEnteredSide).Select(s => s.Key);
+
+                var distanceToExit = int.MaxValue;
+                foreach (var side in validSides)
+                {
+                    var neighbourCellId = IdentifyNeighbourCell(currentCellId, side);
+                    if (Cells[neighbourCellId].DistanceToExit < distanceToExit)
+                    {
+                        sideToCross = side;
+                        distanceToExit = Cells[neighbourCellId].DistanceToExit;
+                    }
+                }
             }
             else if (openSidesCount == 1)
             {

@@ -1,4 +1,4 @@
-﻿#define INTERACTIVE
+﻿//#define INTERACTIVE
 
 using System;
 using System.Collections.Generic;
@@ -82,10 +82,9 @@ namespace PonyChallengeCore
                 while (mazeState.GameState.MazeState.ToLower() == "active")
                 {
                     var ponyPosition = mazeState.PonyPosition[0];
-                    var currentCell = mazeSolver.Cells[ponyPosition];
 
-                    CellSide sideToCross = mazeSolver.FindSideToCross(currentCell);                    
-                    currentCell.Sides[sideToCross] = CellSideState.Closed;
+                    CellSide sideToCross = mazeSolver.FindSideToCross(ponyPosition);
+                    mazeSolver.Cells[ponyPosition].Sides[sideToCross] = CellSideState.Closed;
 
                     var statuses = await MakeNextMove(mazeId, DetermineMove(sideToCross));
                     if (statuses.MoveStatus.ToLower().Equals("move accepted"))
