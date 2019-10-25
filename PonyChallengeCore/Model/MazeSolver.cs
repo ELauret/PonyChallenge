@@ -60,25 +60,36 @@ namespace PonyChallengeCore.Model
             if (parentCellId == null) Cells[cellId].DistanceToExit = 0;
             else Cells[cellId].DistanceToExit = Cells[(int)parentCellId].DistanceToExit + 1;
 
-            var validNeighboursIds = FindValidNeighbourCells(cellId, parentCellId);
+            var validNeighboursIds = FindAccessibleAdjacentCells(cellId, parentCellId);
             foreach (var neighbourId in validNeighboursIds)
             {
                 SetCellDistanceToExit(neighbourId, cellId);
             }
         }
 
-        public List<int> FindValidNeighbourCells(int cellId, int? parentCellId)
+        /// <summary>
+        /// Find the ids of all adjacent cells that can be accessed from the current cell through an open side.
+        /// It will exclude the previous cell visited before the current if specified
+        /// </summary>
+        /// <param name="cellId">Id of the current cell</param>
+        /// <param name="comingCellId">Id of the cell visited prior to the current one</param>
+        /// <returns>List of the ids of the accessible cells</returns>
+        public List<int> FindAccessibleAdjacentCells(int cellId, int? comingCellId)
         {
-            var neighbourCellIds = new List<int>();
+            if (cellId < 0 || cellId > Width * Height) throw new ArgumentException("Wrong current cell id. It does not correspond to a cell of the maze.");
+            if (comingCellId < 0 || comingCellId > Width * Height) throw new ArgumentException("Wrong coming cell id. It does not correspond to a cell of the maze.");
+            if (comingCellId == cellId) throw new ArgumentException("The cell the process is coming from cannot be the same as the current one.");
+
+            var accessibleAdjacentCellIds = new List<int>();
 
             var validOpenSides = Cells[cellId].Sides.Where(s => s.Value == CellSideState.Open).Select(s => s.Key);
             foreach (var side in validOpenSides)
             {
                 var neighbourCellId = IdentifyAdjacentCell(cellId, side);
-                if (neighbourCellId != parentCellId) neighbourCellIds.Add(neighbourCellId);
+                if (neighbourCellId != comingCellId) accessibleAdjacentCellIds.Add(neighbourCellId);
             }
 
-            return neighbourCellIds;
+            return accessibleAdjacentCellIds;
         }
 
         /// <summary>
@@ -89,8 +100,9 @@ namespace PonyChallengeCore.Model
         /// <returns>Id of the adjacent cell</returns>
         public int IdentifyAdjacentCell(int cellId, CellSide side)
         {
-            int adjacentCellId;
+            if (cellId < 0 || cellId > Width * Height) throw new ArgumentException("Wrong current cell id. It does not correspond to a cell of the maze.");
 
+            int adjacentCellId;
             switch (side)
             {
                 case CellSide.North:
