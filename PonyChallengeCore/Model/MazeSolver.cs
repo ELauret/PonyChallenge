@@ -21,6 +21,7 @@ namespace PonyChallengeCore.Model
 
             InitalizeMazeCells(mazeState);
             SetCellDistanceToExit(mazeState.ExitPosition[0], null);
+            var maxDistance = Cells.Max(c => c.DistanceToExit);
         }
 
         private void InitalizeMazeCells(MazeState mazeState)
@@ -73,34 +74,51 @@ namespace PonyChallengeCore.Model
             var validOpenSides = Cells[cellId].Sides.Where(s => s.Value == CellSideState.Open).Select(s => s.Key);
             foreach (var side in validOpenSides)
             {
-                var neighbourCellId = IdentifyNeighbourCell(cellId, side);
+                var neighbourCellId = IdentifyAdjacentCell(cellId, side);
                 if (neighbourCellId != parentCellId) neighbourCellIds.Add(neighbourCellId);
             }
 
             return neighbourCellIds;
         }
 
-        public int IdentifyNeighbourCell(int cellId, CellSide side)
+        /// <summary>
+        /// Find the id of the adjacent cell when crossing the specified side of the current cell
+        /// </summary>
+        /// <param name="cellId">Id of the current cell</param>
+        /// <param name="side">Side of the current cell to cross</param>
+        /// <returns>Id of the adjacent cell</returns>
+        public int IdentifyAdjacentCell(int cellId, CellSide side)
         {
+            int adjacentCellId;
+
             switch (side)
             {
                 case CellSide.North:
-                    return cellId - Width;
+                    adjacentCellId = cellId - Width;
+                    break;
                 case CellSide.West:
-                    return cellId - 1;
+                    adjacentCellId = cellId - 1;
+                    break;
                 case CellSide.South:
-                    return cellId + Width;
+                    adjacentCellId = cellId + Width;
+                    break;
                 case CellSide.East:
-                    return cellId + 1;
+                    adjacentCellId = cellId + 1;
+                    break;
                 default:
-                    throw new ArgumentException("The side identifier passed is not valid.");
+                    throw new ArgumentException("The side identifier passed does not exist.");
             }
+
+            if (adjacentCellId < 0 || adjacentCellId >= Width * Height)
+                throw new ArgumentException("The side specified is not valid because it is part of the boundary of the maze.");
+
+            return adjacentCellId;
         }
 
         /// <summary>
         /// Find for the current cell which side of it to go through to the next cell
         /// </summary>
-        /// <param name="currentCell"></param>
+        /// <param name="currentCellId">Id of the current cell</param>
         /// <returns> Returns the side of the cell to go through </returns>
         public CellSide FindSideToCross(int currentCellId)
         {
@@ -121,7 +139,7 @@ namespace PonyChallengeCore.Model
                 var distanceToExit = int.MaxValue;
                 foreach (var side in validSides)
                 {
-                    var neighbourCellId = IdentifyNeighbourCell(currentCellId, side);
+                    var neighbourCellId = IdentifyAdjacentCell(currentCellId, side);
                     if (Cells[neighbourCellId].DistanceToExit < distanceToExit)
                     {
                         sideToCross = side;

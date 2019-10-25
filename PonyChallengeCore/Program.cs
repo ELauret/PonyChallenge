@@ -101,7 +101,7 @@ namespace PonyChallengeCore
                         Console.WriteLine(statuses.MazeState);
                     }
 
-                    Thread.Sleep(500);
+                    Thread.Sleep(250);
                 }
 #endif
             }
@@ -188,7 +188,7 @@ namespace PonyChallengeCore
                 }
             }
 
-            mazeId = await InitializeMaze(15, 15, "Applejack", 1);
+            mazeId = await InitializeMaze(15, 15, "Applejack", 3);
             File.WriteAllText(fileName, mazeId);
 
             return mazeId;
