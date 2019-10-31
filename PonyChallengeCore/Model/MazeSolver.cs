@@ -20,7 +20,7 @@ namespace PonyChallengeCore.Model
             Height = mazeState.Height;
 
             InitalizeMazeCells(mazeState);
-            SetCellDistanceToExit(mazeState.ExitPosition[0], null);
+            SetDistanceToExit(mazeState.ExitPosition[0]);
             var maxDistance = Cells.Max(c => c.DistanceToExit);
         }
 
@@ -55,15 +55,26 @@ namespace PonyChallengeCore.Model
             }
         }
 
-        public void SetCellDistanceToExit(int cellId, int? parentCellId)
+        /// <summary>
+        /// Recursive method to set the distance for each cell of the maze from the exit cell
+        /// </summary>
+        /// <param name="cellId">Id of the exit cell</param>
+        public void SetDistanceToExit(int cellId)
         {
-            if (parentCellId == null) Cells[cellId].DistanceToExit = 0;
-            else Cells[cellId].DistanceToExit = Cells[(int)parentCellId].DistanceToExit + 1;
+            if (cellId < 0 || cellId > Width * Height) throw new ArgumentException("Wrong current cell id. It does not correspond to a cell of the maze.");
 
-            var validNeighboursIds = FindAccessibleAdjacentCells(cellId, parentCellId);
-            foreach (var neighbourId in validNeighboursIds)
+            var currentCell = Cells[cellId];
+            var previousCellId = currentCell.PreviousCellIdFromExit;
+
+            if (previousCellId == null) currentCell.DistanceToExit = 0;
+            else if (currentCell.DistanceToExit != null) return;
+            else currentCell.DistanceToExit = Cells[(int)previousCellId].DistanceToExit + 1;
+
+            var validAdjacentCellsIds = FindAccessibleAdjacentCells(cellId, previousCellId);
+            foreach (var adjacentCellId in validAdjacentCellsIds)
             {
-                SetCellDistanceToExit(neighbourId, cellId);
+                Cells[adjacentCellId].PreviousCellIdFromExit = cellId;
+                SetDistanceToExit(adjacentCellId);
             }
         }
 
@@ -152,10 +163,11 @@ namespace PonyChallengeCore.Model
                 foreach (var side in validSides)
                 {
                     var neighbourCellId = IdentifyAdjacentCell(currentCellId, side);
+                    /// TODO Probalby need to check for DistanceToExit not null
                     if (Cells[neighbourCellId].DistanceToExit < distanceToExit)
                     {
                         sideToCross = side;
-                        distanceToExit = Cells[neighbourCellId].DistanceToExit;
+                        distanceToExit = (int)Cells[neighbourCellId].DistanceToExit;
                     }
                 }
             }

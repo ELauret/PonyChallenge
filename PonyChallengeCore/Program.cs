@@ -1,4 +1,4 @@
-﻿//#define INTERACTIVE
+﻿#define INTERACTIVE
 
 using System;
 using System.Collections.Generic;
@@ -188,7 +188,7 @@ namespace PonyChallengeCore
                 }
             }
 
-            mazeId = await InitializeMaze(15, 15, "Applejack", 3);
+            mazeId = await InitializeMaze(15, 15, "Applejack", 10);
             File.WriteAllText(fileName, mazeId);
 
             return mazeId;

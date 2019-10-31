@@ -7,8 +7,9 @@ namespace PonyChallengeCore.Model
     public class Cell
     {
         public Dictionary<CellSide,CellSideState> Sides { get; }
-        public CellSide? FirstEnteredSide;
-        public int DistanceToExit { get; set; }
+        public int? PreviousCellIdFromExit { get; set; }
+        public int? DistanceToExit { get; set; }
+        public CellSide? FirstEnteredSide { get; set; }
 
         public Cell()
         {
@@ -18,6 +19,8 @@ namespace PonyChallengeCore.Model
             Sides.Add(CellSide.South, CellSideState.Open);
             Sides.Add(CellSide.East, CellSideState.Open);
 
+            PreviousCellIdFromExit = null;
+            DistanceToExit = null;
             FirstEnteredSide = null;
         }
 

@@ -11,6 +11,9 @@ namespace PonyChallengeCore.Model.Tests
     public class MazeSolverTests
     {
         MazeSolver mazeSolver;
+        const int ponyPosition = 10;
+        const int domokunPosition = 2;
+        const int exitPosition = 18;
 
         [TestInitialize]
         public void InitializeMazeSolverTests()
@@ -33,9 +36,9 @@ namespace PonyChallengeCore.Model.Tests
                 PlayerName = "moi",
                 Dimensions = new[] { width, heigth },
                 Data = mazeData,
-                PonyPosition = new[] { 10 },
-                DomokunPosition = new[] { 2 },
-                ExitPosition = new[] { 18 },
+                PonyPosition = new[] { ponyPosition },
+                DomokunPosition = new[] { domokunPosition },
+                ExitPosition = new[] { exitPosition },
                 GameState = new GameState() { MazeState = "Active", MoveStatus = "Successfully created" }
             };
 
@@ -46,7 +49,7 @@ namespace PonyChallengeCore.Model.Tests
 
         [TestMethod()]
         [ExpectedException(typeof(ArgumentException))]
-        public void IdentifyAdjacentCellTestFailCellOutsideMaze()
+        public void IdentifyAdjacentCellTestCellOutsideMaze()
         {
             var cellId = mazeSolver.Width * mazeSolver.Height + 10;
             _ = mazeSolver.IdentifyAdjacentCell(cellId, CellSide.North);
@@ -54,7 +57,7 @@ namespace PonyChallengeCore.Model.Tests
 
         [TestMethod()]
         [ExpectedException(typeof(ArgumentException))]
-        public void IdentifyAdjacentCellTestFailBoundarySide()
+        public void IdentifyAdjacentCellTestBoundarySide()
         {
             var cellId = 3;
             _ = mazeSolver.IdentifyAdjacentCell(cellId, CellSide.North);
@@ -106,7 +109,7 @@ namespace PonyChallengeCore.Model.Tests
 
         [TestMethod()]
         [ExpectedException(typeof(ArgumentException))]
-        public void FindAccessibleAdjacentCellsTestFailCurrentCellOutsideMaze()
+        public void FindAccessibleAdjacentCellsTestCurrentCellOutsideMaze()
         {
             var cellId = mazeSolver.Width * mazeSolver.Height + 10;
             _ = mazeSolver.FindAccessibleAdjacentCells(cellId, null);
@@ -114,7 +117,7 @@ namespace PonyChallengeCore.Model.Tests
 
         [TestMethod()]
         [ExpectedException(typeof(ArgumentException))]
-        public void FindAccessibleAdjacentCellsTestFailComingCellOutsideMaze()
+        public void FindAccessibleAdjacentCellsTestComingCellOutsideMaze()
         {
             var cellId = (mazeSolver.Width * mazeSolver.Height) / 2;
             var comingCellId = mazeSolver.Width * mazeSolver.Height + 10;
@@ -123,7 +126,7 @@ namespace PonyChallengeCore.Model.Tests
 
         [TestMethod()]
         [ExpectedException(typeof(ArgumentException))]
-        public void FindAccessibleAdjacentCellsTestFailComingCellSameAsCurrent()
+        public void FindAccessibleAdjacentCellsTestComingCellSameAsCurrent()
         {
             var cellId = (mazeSolver.Width * mazeSolver.Height) / 2;
             var comingCellId = cellId;
@@ -131,7 +134,7 @@ namespace PonyChallengeCore.Model.Tests
         }
 
         [TestMethod()]
-        public void FindAccessibleAdjacentCellsTestPassNoComingCell()
+        public void FindAccessibleAdjacentCellsTestNoComingCell()
         {
             var cellId = 12;
             var result = mazeSolver.FindAccessibleAdjacentCells(cellId, null);
@@ -142,7 +145,7 @@ namespace PonyChallengeCore.Model.Tests
         }
 
         [TestMethod()]
-        public void FindAccessibleAdjacentCellsTestPassComingCell()
+        public void FindAccessibleAdjacentCellsTestComingCell()
         {
             var cellId = 12;
             var comingCellId = 13;
@@ -154,13 +157,37 @@ namespace PonyChallengeCore.Model.Tests
         }
 
         [TestMethod()]
-        public void FindAccessibleAdjacentCellsTestPassNoAccessibleAdjacentCell()
+        public void FindAccessibleAdjacentCellsTestNoAccessibleAdjacentCell()
         {
             var cellId = 24;
             var comingCellId = 19;
             var result = mazeSolver.FindAccessibleAdjacentCells(cellId, comingCellId);
 
             Assert.AreEqual(0, result.Count);
+        }
+
+        #endregion
+
+        #region Tests for SetDistanceToExit() method
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentException))]
+        public void SetDistanceToExitTestCurrentCellOutsideMaze()
+        {
+            var cellId = mazeSolver.Width * mazeSolver.Height + 10;
+            mazeSolver.SetDistanceToExit(cellId);
+        }
+
+        [TestMethod]
+        public void SetDistanceToExitTestStraightMaze()
+        {
+            var expectedMaxDistance = 12;
+
+            mazeSolver.SetDistanceToExit(exitPosition);
+
+            var actualMaxDistance = mazeSolver.Cells.Max(c => c.DistanceToExit);
+
+            Assert.AreEqual(expectedMaxDistance, actualMaxDistance);
         }
 
         #endregion
