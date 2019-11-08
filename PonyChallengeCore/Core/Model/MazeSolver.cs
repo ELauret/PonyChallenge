@@ -20,8 +20,6 @@ namespace PonyChallengeCore.Model
             Height = mazeState.Height;
 
             InitalizeMazeCells(mazeState);
-            SetDistanceToExit(mazeState.ExitPosition[0]);
-            var maxDistance = Cells.Max(c => c.DistanceToExit);
         }
 
         private void InitalizeMazeCells(MazeState mazeState)
@@ -67,7 +65,18 @@ namespace PonyChallengeCore.Model
             var previousCellId = currentCell.PreviousCellIdFromExit;
 
             if (previousCellId == null) currentCell.DistanceToExit = 0;
-            else if (currentCell.DistanceToExit != null) return;
+            else if (currentCell.DistanceToExit != null)
+            {
+                var newDistance = Cells[(int)previousCellId].DistanceToExit + 1;
+                if (currentCell.DistanceToExit > newDistance)
+                {
+                    currentCell.DistanceToExit = newDistance;
+                }
+                else
+                {
+                    return;
+                }
+            }
             else currentCell.DistanceToExit = Cells[(int)previousCellId].DistanceToExit + 1;
 
             var validAdjacentCellsIds = FindAccessibleAdjacentCells(cellId, previousCellId);

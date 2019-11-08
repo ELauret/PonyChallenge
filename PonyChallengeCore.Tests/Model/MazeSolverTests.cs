@@ -179,15 +179,28 @@ namespace PonyChallengeCore.Model.Tests
         }
 
         [TestMethod]
-        public void SetDistanceToExitTestStraightMaze()
+        public void SetDistanceToExitTestSimplyConnectedtMaze()
         {
-            var expectedMaxDistance = 12;
+            mazeSolver.SetDistanceToExit(exitPosition);
+
+            var maxDistance = mazeSolver.Cells.Max(c => c.DistanceToExit);
+
+            Assert.AreEqual(9, mazeSolver.Cells[11].DistanceToExit);
+            Assert.AreEqual(12, maxDistance);
+        }
+
+        [TestMethod]
+        public void SetDistanceToExitTestMultiplyConnectedtMaze()
+        {
+            mazeSolver.Cells[11].Sides[CellSide.East] = CellSideState.Open;
+            mazeSolver.Cells[12].Sides[CellSide.West] = CellSideState.Open;
 
             mazeSolver.SetDistanceToExit(exitPosition);
 
-            var actualMaxDistance = mazeSolver.Cells.Max(c => c.DistanceToExit);
+            var maxDistance = mazeSolver.Cells.Max(c => c.DistanceToExit);
 
-            Assert.AreEqual(expectedMaxDistance, actualMaxDistance);
+            Assert.AreEqual(3, mazeSolver.Cells[11].DistanceToExit);
+            Assert.AreEqual(10, maxDistance);
         }
 
         #endregion

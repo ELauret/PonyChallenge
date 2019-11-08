@@ -1,23 +1,18 @@
-﻿#define INTERACTIVE
+﻿//#define INTERACTIVE
 
 using System;
 using System.Collections.Generic;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Text;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
-using System.Diagnostics;
 using System.IO;
 using PonyChallengeCore.Model;
-using System.Linq;
 using System.Threading;
+using PonyChallengeCore.Infrastructure.MazeGameServices;
+using PonyChallengeCore.Core.Interfaces;
 
 namespace PonyChallengeCore
 {
     public class Program
     {
-        static HttpClient client = new HttpClient();
         static List<ConsoleKey> ValidKeys = new List<ConsoleKey>()
                 {
                     ConsoleKey.UpArrow,
@@ -30,6 +25,8 @@ namespace PonyChallengeCore
                     ConsoleKey.E
                 };
 
+        static readonly IMazeGameService _gameService = new HttpMazeGameService();
+
         static void Main(string[] args)
         {
             RunAsync().Wait();
@@ -37,15 +34,11 @@ namespace PonyChallengeCore
 
         static async Task RunAsync()
         {
-            client.BaseAddress = new Uri($"https://ponychallenge.trustpilot.com/");
-            client.DefaultRequestHeaders.Accept.Clear();
-            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
             try
             {
                 string mazeId = await InitializeMaze();
                 Console.WriteLine(mazeId);
-                await PrintMaze(mazeId);
+                await _gameService.PrintMazeAsync(mazeId);
 
 #if INTERACTIVE
                 #region Logic to play the game interactively
@@ -62,8 +55,8 @@ namespace PonyChallengeCore
                         continue;
                     }
 
-                    var statuses = await MakeNextMove(mazeId, DetermineMove(inputKey));
-                    await PrintMaze(mazeId);
+                    var statuses = await _gameService.MakeNextMoveAsync(mazeId, DetermineMove(inputKey));
+                    await _gameService.PrintMazeAsync(mazeId);
                     Console.WriteLine(statuses.MoveStatus);
 
                     if (!statuses.MazeState.Equals("active"))
@@ -76,8 +69,9 @@ namespace PonyChallengeCore
                 #endregion
 
 #else
-                var mazeState = await GetMazeCurrentState(mazeId);
+                var mazeState = await _gameService.GetMazeCurrentStateAsync(mazeId);
                 var mazeSolver = new MazeSolver(mazeState);
+                mazeSolver.SetDistanceToExit(mazeState.ExitPosition[0]);
 
                 while (mazeState.GameState.MazeState.ToLower() == "active")
                 {
@@ -86,16 +80,16 @@ namespace PonyChallengeCore
                     CellSide sideToCross = mazeSolver.FindSideToCross(ponyPosition);
                     mazeSolver.Cells[ponyPosition].Sides[sideToCross] = CellSideState.Closed;
 
-                    var statuses = await MakeNextMove(mazeId, DetermineMove(sideToCross));
+                    var statuses = await _gameService.MakeNextMoveAsync(mazeId, DetermineMove(sideToCross));
                     if (statuses.MoveStatus.ToLower().Equals("move accepted"))
                     {
                         mazeSolver.SetFirstEnteredSideStatus(ponyPosition, sideToCross);
                     }
 
-                    await PrintMaze(mazeId);
+                    await _gameService.PrintMazeAsync(mazeId);
                     Console.WriteLine(statuses.MoveStatus);
 
-                    mazeState = await GetMazeCurrentState(mazeId);
+                    mazeState = await _gameService.GetMazeCurrentStateAsync(mazeId);
                     if (mazeState.GameState.MazeState != "active")
                     {
                         Console.WriteLine(statuses.MazeState);
@@ -181,7 +175,7 @@ namespace PonyChallengeCore
             if (File.Exists(fileName))
             {
                 mazeId = File.ReadAllText(fileName);
-                var mazeState = await GetMazeCurrentState(mazeId);
+                var mazeState = await _gameService.GetMazeCurrentStateAsync(mazeId);
                 if (mazeState.GameState.MazeState.ToLower().Equals("active"))
                 {
                     return mazeId;
@@ -211,85 +205,7 @@ namespace PonyChallengeCore
                 PlayerName = playerName,
                 Difficulty = difficulty
             };
-            return await CreateNewMazeGame(maze);
+            return await _gameService.CreateNewMazeGameAsync(maze);
         }
-
-#region API Call Methods
-
-        /// <summary>
-        /// Post a request to create a new maze game and gets its id in return
-        /// </summary>
-        /// <param name="maze">A Maze object that specifies all of its properties</param>
-        /// <returns>The Id of the maze as a string</returns>
-        static async Task<string> CreateNewMazeGame(MazeCreationInfo maze)
-        {
-            var serializedMaze = JsonConvert.SerializeObject(maze);
-            var content = new StringContent(serializedMaze, Encoding.UTF8, "application/json");
-            var response = await client.PostAsync($"pony-challenge/maze", content);
-            content.Dispose();
-            if (!response.IsSuccessStatusCode)
-            {
-                throw new HttpRequestException(response.Content.ReadAsStringAsync().Result);
-            }
-            var mazeState = JsonConvert.DeserializeObject(await response.Content.ReadAsStringAsync(), typeof(MazeState));
-
-            return ((MazeState)mazeState).Id;
-        }
-
-        /// <summary>
-        /// Send a request to get the maze and print in the console
-        /// </summary>
-        /// <param name="mazeId">The maze Id</param>
-        /// <returns></returns>
-        static async Task PrintMaze(string mazeId)
-        {
-            var response = await client.GetAsync($"pony-challenge/maze/{mazeId}/print");
-            if (!response.IsSuccessStatusCode)
-            {
-                throw new HttpRequestException(response.Content.ReadAsStringAsync().Result);
-            }
-
-            Console.Clear();
-            Console.WriteLine(await response.Content.ReadAsStringAsync());
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="input"></param>
-        /// <returns></returns>
-        static async Task<GameState> MakeNextMove(string mazeId, string move)
-        {
-            var serializedMove = JsonConvert.SerializeObject(new { direction = move });
-            var content = new StringContent(serializedMove, Encoding.UTF8, "application/json");
-            var response = await client.PostAsync($"pony-challenge/maze/{mazeId}", content);
-            content.Dispose();
-            if (!response.IsSuccessStatusCode)
-            {
-                throw new HttpRequestException(response.Content.ReadAsStringAsync().Result);
-            }
-            var statuses = JsonConvert.DeserializeObject(response.Content.ReadAsStringAsync().Result, typeof(GameState));
-
-            return (GameState)statuses;
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="mazeId"></param>
-        /// <returns></returns>
-        static async Task<MazeState> GetMazeCurrentState(string mazeId)
-        {
-            var response = await client.GetAsync($"pony-challenge/maze/{mazeId}");
-            if (!response.IsSuccessStatusCode)
-            {
-                throw new HttpRequestException(response.Content.ReadAsStringAsync().Result);
-            }
-            var mazeState = JsonConvert.DeserializeObject(response.Content.ReadAsStringAsync().Result, typeof(MazeState));
-
-            return (MazeState)mazeState;
-        }
-
-#endregion
     }
 }
