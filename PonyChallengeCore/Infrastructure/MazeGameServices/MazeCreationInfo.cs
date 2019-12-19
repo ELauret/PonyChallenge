@@ -2,10 +2,11 @@
 using System.Collections.Generic;
 using System.Text;
 using Newtonsoft.Json;
+using PonyChallengeCore.Core.Interfaces;
 
-namespace PonyChallengeCore.Model
+namespace PonyChallengeCore.Infrastructure.MazeGameServices
 {
-    public class MazeCreationInfo
+    public class MazeCreationInfo : IMazeCreationInfo
     {
         [JsonProperty(PropertyName = "maze-width")]
         public int Width { get; set; }

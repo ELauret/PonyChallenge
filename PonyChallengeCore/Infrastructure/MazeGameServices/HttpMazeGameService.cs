@@ -26,7 +26,7 @@ namespace PonyChallengeCore.Infrastructure.MazeGameServices
         /// </summary>
         /// <param name="maze">A Maze object that specifies all of its properties</param>
         /// <returns>The Id of the maze as a string</returns>
-        public async Task<string> CreateNewMazeGameAsync(MazeCreationInfo maze)
+        public async Task<string> CreateNewMazeGameAsync(IMazeCreationInfo maze)
         {
             var serializedMaze = JsonConvert.SerializeObject(maze);
             var content = new StringContent(serializedMaze, Encoding.UTF8, "application/json");
@@ -64,7 +64,7 @@ namespace PonyChallengeCore.Infrastructure.MazeGameServices
         /// <param name="mazeId"></param>
         /// <param name="move"></param>
         /// <returns></returns>
-        public async Task<GameState> MakeNextMoveAsync(string mazeId, string move)
+        public async Task<IGameState> MakeNextMoveAsync(string mazeId, string move)
         {
             var serializedMove = JsonConvert.SerializeObject(new { direction = move });
             var content = new StringContent(serializedMove, Encoding.UTF8, "application/json");

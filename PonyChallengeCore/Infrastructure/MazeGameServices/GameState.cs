@@ -2,10 +2,11 @@
 using System.Collections.Generic;
 using System.Text;
 using Newtonsoft.Json;
+using PonyChallengeCore.Core.Interfaces;
 
-namespace PonyChallengeCore.Model
+namespace PonyChallengeCore.Infrastructure.MazeGameServices
 {
-    public class GameState
+    public class GameState : IGameState
     {
         [JsonProperty(PropertyName = "state")]
         public string MazeState { get; set; }

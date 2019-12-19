@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using Newtonsoft.Json;
 using System.Linq;
+using PonyChallengeCore.Infrastructure.MazeGameServices;
 
 namespace PonyChallengeCore.Model
 {

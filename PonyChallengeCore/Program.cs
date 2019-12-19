@@ -36,9 +36,9 @@ namespace PonyChallengeCore
         {
             try
             {
-                string mazeId = await InitializeMaze();
+                string mazeId = await InitializeMaze().ConfigureAwait(false);
                 Console.WriteLine(mazeId);
-                await _gameService.PrintMazeAsync(mazeId);
+                await _gameService.PrintMazeAsync(mazeId).ConfigureAwait(false);
 
 #if INTERACTIVE
                 #region Logic to play the game interactively
@@ -55,8 +55,8 @@ namespace PonyChallengeCore
                         continue;
                     }
 
-                    var statuses = await _gameService.MakeNextMoveAsync(mazeId, DetermineMove(inputKey));
-                    await _gameService.PrintMazeAsync(mazeId);
+                    var statuses = await _gameService.MakeNextMoveAsync(mazeId, DetermineMove(inputKey)).ConfigureAwait(false);
+                    await _gameService.PrintMazeAsync(mazeId).ConfigureAwait(false);
                     Console.WriteLine(statuses.MoveStatus);
 
                     if (!statuses.MazeState.Equals("active"))
@@ -69,7 +69,7 @@ namespace PonyChallengeCore
                 #endregion
 
 #else
-                var mazeState = await _gameService.GetMazeCurrentStateAsync(mazeId);
+                var mazeState = await _gameService.GetMazeCurrentStateAsync(mazeId).ConfigureAwait(false);
                 var mazeSolver = new MazeSolver(mazeState);
                 mazeSolver.SetDistanceToExit(mazeState.ExitPosition[0]);
 
@@ -80,16 +80,16 @@ namespace PonyChallengeCore
                     CellSide sideToCross = mazeSolver.FindSideToCross(ponyPosition);
                     mazeSolver.Cells[ponyPosition].Sides[sideToCross] = CellSideState.Closed;
 
-                    var statuses = await _gameService.MakeNextMoveAsync(mazeId, DetermineMove(sideToCross));
+                    var statuses = await _gameService.MakeNextMoveAsync(mazeId, DetermineMove(sideToCross)).ConfigureAwait(false);
                     if (statuses.MoveStatus.ToLower().Equals("move accepted"))
                     {
                         mazeSolver.SetFirstEnteredSideStatus(ponyPosition, sideToCross);
                     }
 
-                    await _gameService.PrintMazeAsync(mazeId);
+                    await _gameService.PrintMazeAsync(mazeId).ConfigureAwait(false);
                     Console.WriteLine(statuses.MoveStatus);
 
-                    mazeState = await _gameService.GetMazeCurrentStateAsync(mazeId);
+                    mazeState = await _gameService.GetMazeCurrentStateAsync(mazeId).ConfigureAwait(false);
                     if (mazeState.GameState.MazeState != "active")
                     {
                         Console.WriteLine(statuses.MazeState);
@@ -175,14 +175,14 @@ namespace PonyChallengeCore
             if (File.Exists(fileName))
             {
                 mazeId = File.ReadAllText(fileName);
-                var mazeState = await _gameService.GetMazeCurrentStateAsync(mazeId);
+                var mazeState = await _gameService.GetMazeCurrentStateAsync(mazeId).ConfigureAwait(false);
                 if (mazeState.GameState.MazeState.ToLower().Equals("active"))
                 {
                     return mazeId;
                 }
             }
 
-            mazeId = await InitializeMaze(15, 15, "Applejack", 10);
+            mazeId = await InitializeMaze(15, 15, "Applejack", 10).ConfigureAwait(false);
             File.WriteAllText(fileName, mazeId);
 
             return mazeId;
@@ -205,7 +205,7 @@ namespace PonyChallengeCore
                 PlayerName = playerName,
                 Difficulty = difficulty
             };
-            return await _gameService.CreateNewMazeGameAsync(maze);
+            return await _gameService.CreateNewMazeGameAsync(maze).ConfigureAwait(false);
         }
     }
 }

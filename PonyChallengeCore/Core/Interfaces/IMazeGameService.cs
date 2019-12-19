@@ -8,9 +8,9 @@ namespace PonyChallengeCore.Core.Interfaces
 {
     interface IMazeGameService
     {
-        Task<string> CreateNewMazeGameAsync(MazeCreationInfo maze);
+        Task<string> CreateNewMazeGameAsync(IMazeCreationInfo maze);
         Task PrintMazeAsync(string mazeId);
-        Task<GameState> MakeNextMoveAsync(string mazeId, string move);
+        Task<IGameState> MakeNextMoveAsync(string mazeId, string move);
         Task<MazeState> GetMazeCurrentStateAsync(string mazeId);
     }
 }
