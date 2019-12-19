@@ -1,12 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
 
 namespace PonyChallengeCore.Model
 {
     public class Cell
     {
-        public Dictionary<CellSide,CellSideState> Sides { get; }
+        public Dictionary<CellSide, CellSideState> Sides { get; }
         public int? PreviousCellIdFromExit { get; set; }
         public int? DistanceToExit { get; set; }
         public CellSide? FirstEnteredSide { get; set; }

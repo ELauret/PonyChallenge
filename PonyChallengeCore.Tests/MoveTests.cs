@@ -1,7 +1,7 @@
-using PonyChallengeCore.Model;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.IO;
+using PonyChallengeCore.Model;
 using System;
+using System.IO;
 
 namespace PonyChallengeCore.Tests
 {

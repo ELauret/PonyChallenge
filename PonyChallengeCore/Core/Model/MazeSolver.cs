@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Linq;
 
 namespace PonyChallengeCore.Model
 {
     public class MazeSolver
-    {        
+    {
         public Cell[] Cells { get; set; }
         public int Width { get; }
         public int Height { get; }

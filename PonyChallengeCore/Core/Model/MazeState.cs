@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Newtonsoft.Json;
-using System.Linq;
+﻿using Newtonsoft.Json;
 using PonyChallengeCore.Infrastructure.MazeGameServices;
 
 namespace PonyChallengeCore.Model

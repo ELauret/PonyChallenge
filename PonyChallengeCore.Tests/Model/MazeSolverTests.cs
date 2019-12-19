@@ -1,8 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using PonyChallengeCore.Model;
+using PonyChallengeCore.Infrastructure.MazeGameServices;
 using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Linq;
 
 namespace PonyChallengeCore.Model.Tests

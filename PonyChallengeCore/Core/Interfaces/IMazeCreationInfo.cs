@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace PonyChallengeCore.Core.Interfaces
+﻿namespace PonyChallengeCore.Core.Interfaces
 {
     public interface IMazeCreationInfo
     {

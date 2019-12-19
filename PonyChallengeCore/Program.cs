@@ -1,13 +1,13 @@
 ﻿//#define INTERACTIVE
 
+using PonyChallengeCore.Core.Interfaces;
+using PonyChallengeCore.Infrastructure.MazeGameServices;
+using PonyChallengeCore.Model;
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using System.IO;
-using PonyChallengeCore.Model;
 using System.Threading;
-using PonyChallengeCore.Infrastructure.MazeGameServices;
-using PonyChallengeCore.Core.Interfaces;
+using System.Threading.Tasks;
 
 namespace PonyChallengeCore
 {

@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using PonyChallengeCore.Model;
 using System.Threading.Tasks;
-using PonyChallengeCore.Model;
 
 namespace PonyChallengeCore.Core.Interfaces
 {
